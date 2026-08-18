@@ -41,7 +41,8 @@
     "helmet": "^7.1.0",
     "nanoid": "^5.0.7",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "stripe": "^16.8.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",
