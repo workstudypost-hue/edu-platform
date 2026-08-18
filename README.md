@@ -1,0 +1,74 @@
+# المنصة التعليمية الإلكترونية — Edu Platform
+
+هذا هو الهيكل الأساسي (Scaffold) للمنصة، مبني وفق التصميم المعماري الكامل المُتفق عليه.
+يغطي حاليًا: **الأساس التقني + نظام المصادقة المزدوج + RBAC**، وهو نقطة الانطلاق لبناء بقية الأنظمة (المالي، الفيديو، الذكاء الاصطناعي، التقارير...) تباعًا.
+
+## البنية
+
+```
+edu-platform/
+├── backend/          # NestJS API
+│   ├── prisma/
+│   │   ├── schema.prisma   # كل نماذج قاعدة البيانات المصمَّمة
+│   │   └── seed.ts         # الأدوار + الصلاحيات + أول super_admin
+│   └── src/
+│       ├── modules/
+│       │   ├── auth/       # staff/ (دعوة) + public/ (تسجيل ذاتي + OTP)
+│       │   ├── users/
+│       │   ├── rbac/       # فحص الصلاحيات الديناميكي
+│       │   └── prisma/
+│       └── common/         # Guards + Decorators مشتركة
+├── frontend/         # Next.js (App Router) + next-intl (4 لغات + RTL)
+├── docs/             # وثائق معمارية إضافية
+└── docker-compose.yml
+```
+
+## التشغيل المحلي
+
+### 1) قاعدة البيانات و Redis
+```bash
+docker-compose up -d
+```
+
+### 2) Backend
+```bash
+cd backend
+cp .env.example .env     # ثم عدّل القيم الحساسة
+npm install
+npx prisma migrate dev --name init
+npx prisma db seed       # ينشئ الأدوار + super_admin أولي
+npm run start:dev
+```
+سيعمل على: `http://localhost:4000/api/v1`
+
+بيانات دخول super_admin الافتراضية (من الـ seed):
+- البريد: `admin@platform.local`
+- كلمة المرور: `ChangeMe123!`
+⚠️ **غيّرها فورًا** — عرّفها عبر `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` في `.env` قبل أول seed في بيئة حقيقية.
+
+### 3) Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+سيعمل على: `http://localhost:3000` (يُحوَّل تلقائيًا إلى `/ar`)
+
+## ما هو مُنفَّذ فعليًا الآن
+
+- ✅ Prisma Schema كامل (مستخدمون، أدوار/صلاحيات، دورات، طلبات خاصة، جلسات)
+- ✅ مسار مصادقة الموظفين: دعوة → قبول → تسجيل دخول منفصل (`/auth/staff/*`)
+- ✅ مسار التسجيل الذاتي: تسجيل → OTP → تفعيل (`/auth/public/*`)
+- ✅ موافقة إدارية معلّقة تلقائيًا لكل مدرب جديد (`instructor_profiles.account_status`)
+- ✅ RBAC ديناميكي بالكامل من قاعدة البيانات (`PermissionsGuard` + `@RequirePermissions`)
+- ✅ سجل نشاط أساسي (`activity_logs`) لعمليات الموظفين الحساسة
+- ✅ Frontend: توجيه i18n لـ 4 لغات مع RTL تلقائي للعربية
+
+## الخطوات التالية (راجع `docs/production-notes.md`)
+
+كل ميزة مؤجَّلة عمدًا لهذه المرحلة موسومة بـ `TODO(production)` في الكود، وموثّقة بالتفصيل في `docs/production-notes.md` — بما فيها: تكامل OTP الفعلي (Twilio)، OAuth (Google/Microsoft)، الأنظمة المالية، حماية الفيديو، الذكاء الاصطناعي، والتقارير.
+
+## المتابعة عبر Claude Code
+
+هذا المشروع مصمَّم للاستكمال عبر **Claude Code**. بعد فك الضغط، افتح المجلد وابدأ الجلسة بطلب مثل:
+> "اقرأ docs/production-notes.md وابدأ بتنفيذ نظام الدفع والأقساط كما هو موثّق في نفس الملف"
